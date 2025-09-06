@@ -1,0 +1,13 @@
+services:
+  markleaf:
+    build: .
+    image: markleaf:latest
+    environment:
+      - SESSION_SECRET=${SESSION_SECRET:-change-me}
+      - DATABASE_URL=sqlite:///instance/markleaf.db
+      - FLASK_ENV=production
+    volumes:
+      - ./Toolchain/instance:/app/Toolchain/instance
+    ports:
+      - "8080:8080"
+
