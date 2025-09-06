@@ -31,3 +31,15 @@ build/
 *.pdf
 Toolchain/attached_assets/*.txt
 
+# Environment and logs
+.env
+.env.*
+*.log
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Replit artifacts (keep local only)
+Toolchain/.local/
+Toolchain/.replit
+Toolchain/replit.md
