@@ -1,0 +1,176 @@
+% =====================================================================
+% BrightLedger — Pandoc LaTeX Template (default.tex)
+% Mantiene: cover, header/footer, TOC. Aggiunge: TABLE TUNING (font ridotto nelle tabelle).
+% =====================================================================
+
+\documentclass[10pt]{article}
+
+% -------------------- Geometry & base --------------------
+\usepackage{geometry}
+\geometry{a4paper, margin=25mm, headheight=16pt, headsep=26pt, footskip=14pt}
+
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue}
+
+% -------------------- Font settings (using default LaTeX fonts) --------------------
+% Using default LaTeX fonts instead of fontspec to avoid font issues
+
+% -------------------- Safety macros per Pandoc --------------------
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\real}[1]{#1}
+
+% -------------------- BrightLedger metadata (da variabili Pandoc) --------------------
+$if(title)$
+  \newcommand{\BLDTitle}{$title$}
+$else$
+  \newcommand{\BLDTitle}{}
+$endif$
+
+$if(version)$
+  \newcommand{\BLDVersion}{$version$}
+$else$
+  \newcommand{\BLDVersion}{}
+$endif$
+
+$if(updated)$
+  \newcommand{\BLDUpdated}{$updated$}
+$else$
+  $if(date)$
+    \newcommand{\BLDUpdated}{$date$}
+  $else$
+    \newcommand{\BLDUpdated}{}
+  $endif$
+$endif$
+
+$if(logo)$
+  \newcommand{\BLDLogo}{$logo$}
+$else$
+  \newcommand{\BLDLogo}{}
+$endif$
+
+$if(author)$
+  \newcommand{\BLDAuthor}{$for(author)$$author$$sep$, $endfor$}
+$else$
+  \newcommand{\BLDAuthor}{}
+$endif$
+
+
+% -------------------- PREMIUM DESIGN & TABLE STYLING --------------------
+\usepackage[english]{babel}
+\usepackage{xurl}
+\usepackage{ragged2e}
+\usepackage{array,longtable,booktabs,calc}
+\usepackage{pdflscape}
+\usepackage{microtype}
+\usepackage{colortbl}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{framed}
+
+% Corporate color palette (inspired by major consulting firms)
+\definecolor{primarygray}{RGB}{248,249,250}
+\definecolor{headergray}{RGB}{233,236,239}
+\definecolor{bordergray}{RGB}{206,212,218}
+\definecolor{textgray}{RGB}{52,58,64}
+\definecolor{accentblue}{RGB}{0,123,191}
+
+% Enhanced column types
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+% Code block styling (Shaded environment)
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% Professional table spacing
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.4}
+\setlength{\extrarowheight}{3pt}
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+\setlength\LTpre{1em}
+\setlength\LTpost{1em}
+\emergencystretch=3em
+
+% Table header styling (gray background for headers)
+\newcommand{\headerrow}[1]{\rowcolor{headergray}\textbf{#1}}
+
+% Customize table rules for professional look
+\setlength{\heavyrulewidth}{0.8pt}
+\setlength{\lightrulewidth}{0.4pt}
+\setlength{\cmidrulewidth}{0.4pt}
+
+% Professional table environment
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{
+  \small
+  \setlength{\parskip}{0pt}
+  \rowcolors{2}{white}{primarygray}
+}
+
+\AtBeginEnvironment{tabular}{
+  \small
+  \rowcolors{2}{white}{primarygray}
+}
+
+% Landscape tables with better spacing
+\newenvironment{bldlandscape}{\begin{landscape}\begingroup\small}{\endgroup\end{landscape}}
+
+% Section styling improvements
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries\color{textgray}}
+  {\thesection}{1em}{}
+  [\vspace{2pt}\color{bordergray}\rule{\textwidth}{0.8pt}]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{textgray}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{textgray}}
+  {\thesubsubsection}{1em}{}
+
+% Enhanced spacing
+\titlespacing*{\section}{0pt}{20pt}{12pt}
+\titlespacing*{\subsection}{0pt}{16pt}{8pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
+
+% -------------------- END PREMIUM DESIGN -------------------
+
+% -------------------- Hook Pandoc: header-includes (qui entra header_footer.tex) --------------------
+$for(header-includes)$
+$header-includes$
+$endfor$
+
+% --- PDF metadata (brand) ---
+\hypersetup{pdftitle=\BLDTitle, pdfauthor=\BLDAuthor, pdfproducer={MarkLeaf}, pdfcreator={Pandoc + XeLaTeX}}
+
+\begin{document}
+
+% -------------------- Hook Pandoc: include-before (qui entra cover.tex) --------------------
+$for(include-before)$
+$include-before$
+$endfor$
+
+% -------------------- TOC (Indice) --------------------
+$if(toc)$
+{
+  \setcounter{tocdepth}{$toc-depth$}
+  \tableofcontents
+  \clearpage
+}
+$endif$
+
+% -------------------- Corpo --------------------
+$body$
+
+% -------------------- Hook Pandoc: include-after (se usato) --------------------
+$for(include-after)$
+$include-after$
+$endfor$
+
+\end{document}

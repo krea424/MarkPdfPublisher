@@ -1,0 +1,121 @@
+% =====================================================================
+% BrightLedger — Pandoc LaTeX Template (Classic Design)
+% Design classico e pulito per documenti professionali
+% =====================================================================
+
+\documentclass[10pt]{article}
+
+% -------------------- Geometry & base --------------------
+\usepackage{geometry}
+\geometry{a4paper, margin=25mm, headheight=16pt, headsep=26pt, footskip=14pt}
+
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue}
+
+% -------------------- Font settings (using default LaTeX fonts) --------------------
+% Using default LaTeX fonts for maximum compatibility
+
+% -------------------- Safety macros per Pandoc --------------------
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\real}[1]{#1}
+
+% -------------------- BrightLedger metadata (da variabili Pandoc) --------------------
+$if(title)$
+  \newcommand{\BLDTitle}{$title$}
+$else$
+  \newcommand{\BLDTitle}{}
+$endif$
+
+$if(version)$
+  \newcommand{\BLDVersion}{$version$}
+$else$
+  \newcommand{\BLDVersion}{}
+$endif$
+
+$if(updated)$
+  \newcommand{\BLDUpdated}{$updated$}
+$else$
+  $if(date)$
+    \newcommand{\BLDUpdated}{$date$}
+  $else$
+    \newcommand{\BLDUpdated}{}
+  $endif$
+$endif$
+
+$if(logo)$
+  \newcommand{\BLDLogo}{$logo$}
+$else$
+  \newcommand{\BLDLogo}{}
+$endif$
+
+$if(author)$
+  \newcommand{\BLDAuthor}{$for(author)$$author$$sep$, $endfor$}
+$else$
+  \newcommand{\BLDAuthor}{}
+$endif$
+
+% -------------------- CLASSIC TABLE STYLING --------------------
+\usepackage[english]{babel}
+\usepackage{xurl}
+\usepackage{ragged2e}
+\usepackage{array,longtable,booktabs,calc}
+\usepackage{pdflscape}
+\usepackage{microtype}
+\usepackage{fancyvrb}
+\usepackage{framed}
+
+% Simple column types
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+% Code block styling (Shaded environment)
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+
+% Clean table spacing
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\extrarowheight}{2pt}
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+\setlength\LTpre{0.5em}
+\setlength\LTpost{0.5em}
+\emergencystretch=3em
+
+% Simple table environment
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\small\setlength{\parskip}{0pt}}
+
+% Simple landscape tables
+\newenvironment{bldlandscape}{\begin{landscape}\begingroup\small}{\endgroup\end{landscape}}
+% -------------------- END CLASSIC STYLING --------------------
+
+% -------------------- Hook Pandoc: header-includes --------------------
+$for(header-includes)$
+$header-includes$
+$endfor$
+
+% --- PDF metadata (brand) ---
+\hypersetup{pdftitle=\BLDTitle, pdfauthor=\BLDAuthor, pdfproducer={MarkLeaf}, pdfcreator={Pandoc + XeLaTeX}}
+
+\begin{document}
+
+% -------------------- Hook Pandoc: include-before --------------------
+$for(include-before)$
+$include-before$
+$endfor$
+
+% -------------------- TOC (Indice) --------------------
+$if(toc)$
+{
+  \setcounter{tocdepth}{$toc-depth$}
+  \tableofcontents
+  \clearpage
+}
+$endif$
+
+% -------------------- Corpo --------------------
+$body$
+
+\end{document}
