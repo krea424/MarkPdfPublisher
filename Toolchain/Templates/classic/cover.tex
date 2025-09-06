@@ -1,0 +1,36 @@
+% cover.tex — Classic Cover Page
+% Simple and clean cover page design
+
+\thispagestyle{empty}
+\begin{titlepage}
+  \begin{center}
+    \vspace*{2cm}
+
+    % Logo section - centered
+    \ifdefined\BLDLogo
+      \makeatletter\providecommand{\bldIfNonempty}[3]{\edef\@tempa{#1}\ifx\@tempa\empty #2\else #3\fi}\makeatother
+      \bldIfNonempty{\BLDLogo}{}{\includegraphics[width=0.45\textwidth]{\BLDLogo}\par\vspace{1.5cm}}%
+    \fi
+
+    % Title and metadata - simple and elegant
+    {\Large \textbf{\BLDTitle}\par}
+    \vspace{0.75cm}
+    
+    \ifdefined\BLDVersion
+      \ifx\BLDVersion\empty
+      \else
+        {\large Version: \BLDVersion\par}
+        \vspace{0.25cm}
+      \fi
+    \fi
+    
+    \ifdefined\BLDUpdated
+      \ifx\BLDUpdated\empty
+      \else
+        {\normalsize Updated: \BLDUpdated\par}
+      \fi
+    \fi
+
+    \vfill
+  \end{center}
+\end{titlepage}
