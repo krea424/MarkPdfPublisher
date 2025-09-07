@@ -80,8 +80,7 @@ $endif$
 \newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
 
 % Code block styling (Shaded environment)
-\definecolor{shadecolor}{RGB}{248,248,248}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+% Using Pandoc-provided highlighting macros; avoid local Shaded redefinition
 
 % Pandoc highlighting macros (define Highlighting environment, etc.)
 $if(highlighting-macros)$
