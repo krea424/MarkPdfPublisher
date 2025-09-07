@@ -50,6 +50,96 @@ class PDFGenerator {
         this.init();
     }
 
+    // ===== Template Settings helpers =====
+    initTemplateSettings() {
+        this.updateTemplateSettingsVisibility();
+        this.updateActiveTemplateBadge();
+        const tpl = document.getElementById('templateType');
+        if (tpl) tpl.addEventListener('change', () => { this.updateTemplateSettingsVisibility(); this.updateActiveTemplateBadge(); this.savePreferences(); });
+        const dbtn = document.getElementById('eisvogelDefaultsBtn');
+        if (dbtn) dbtn.addEventListener('click', () => this.restoreEisvogelDefaults());
+    }
+
+    updateActiveTemplateBadge() {
+        const badge = document.getElementById('activeTemplateBadge');
+        const el = document.getElementById('templateType');
+        if (!badge || !el) return;
+        const map = { consulting: 'Consulting', classic: 'Classic', eisvogel: 'Eisvogel' };
+        badge.textContent = map[el.value] || '—';
+    }
+
+    updateTemplateSettingsVisibility() {
+        const el = document.getElementById('templateType');
+        const eis = document.getElementById('eisvogelSettings');
+        const def = document.getElementById('defaultTemplateSettings');
+        if (!el || !eis || !def) return;
+        const isEis = el.value === 'eisvogel';
+        eis.classList.toggle('d-none', !isEis);
+        def.classList.toggle('d-none', isEis);
+    }
+
+    setupInstructionsToggle() {
+        const collapseEl = document.getElementById('instructionsCollapse');
+        const toggleBtn = document.getElementById('toggleInstructionsBtn');
+        if (!collapseEl || !toggleBtn || !window.bootstrap) return;
+        const saved = localStorage.getItem('mdpdf_instr');
+        const wantCollapsed = saved === 'collapsed';
+        if (wantCollapsed) {
+            collapseEl.classList.remove('show');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Mostra';
+        } else {
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Nascondi';
+        }
+        collapseEl.addEventListener('shown.bs.collapse', () => {
+            try { localStorage.setItem('mdpdf_instr', 'expanded'); } catch {}
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Nascondi';
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        });
+        collapseEl.addEventListener('hidden.bs.collapse', () => {
+            try { localStorage.setItem('mdpdf_instr', 'collapsed'); } catch {}
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Mostra';
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    normalizeLogoWidth(val) {
+        if (!val) return '';
+        let v = String(val).trim();
+        if (/^\d+(\.\d+)?$/.test(v)) return v + 'mm';
+        if (/^\d+(\.\d+)?\s*(mm|cm|in|pt)$/i.test(v)) return v.replace(/\s+/g, '');
+        return null;
+    }
+
+    validateEisvogelSettings() {
+        const tpl = document.getElementById('templateType');
+        if (!tpl || tpl.value !== 'eisvogel') return true;
+        let ok = true;
+        const lw = document.getElementById('logoWidth');
+        if (lw) {
+            lw.classList.remove('is-invalid');
+            const normalized = this.normalizeLogoWidth(lw.value);
+            if (lw.value && normalized === null) { lw.classList.add('is-invalid'); ok = false; }
+            else if (normalized) { lw.value = normalized; }
+        }
+        return ok;
+    }
+
+    restoreEisvogelDefaults() {
+        const tp = document.getElementById('titlepageToggle');
+        const lw = document.getElementById('logoWidth');
+        const c1 = document.getElementById('titlepageColor');
+        const c2 = document.getElementById('titlepageTextColor');
+        const c3 = document.getElementById('titlepageRuleColor');
+        const tc = document.getElementById('tocColor');
+        const cl = document.getElementById('colorLinksToggle');
+        if (tp) tp.checked = true;
+        if (lw) { lw.value = '35mm'; lw.classList.remove('is-invalid'); }
+        if (c1) c1.value = '#ffffff'; if (c2) c2.value = '#5f5f5f'; if (c3) c3.value = '#435488'; if (tc) tc.value = '#2e6bd3'; if (cl) cl.checked = true;
+        this.savePreferences(); this.showToast('success', 'Eisvogel settings restored.');
+    }
+
     init() {
         this.setupFileInputs();
         this.setupFormSubmission();
@@ -57,6 +147,8 @@ class PDFGenerator {
         this.loadPreferences();
         this.initTheme();
         this.initPalette();
+        this.initTemplateSettings();
+        this.setupInstructionsToggle();
         this.setupPreview();
         this.setupBookControls();
         this.setupToolbar();
@@ -337,6 +429,16 @@ class PDFGenerator {
             this.setProgress(true);
             this.hideError();
             this.hideSuccess();
+            // Validate template-specific options (Eisvogel)
+            const tplEl = document.getElementById('templateType');
+            if (tplEl && tplEl.value === 'eisvogel') {
+                if (!this.validateEisvogelSettings || !this.validateEisvogelSettings()) {
+                    this.setProgress(false);
+                    this.showError('Please correct the highlighted Eisvogel settings.');
+                    this.showToast('error', 'Invalid Eisvogel settings.');
+                    return;
+                }
+            }
 
             const formData = new FormData();
             
@@ -354,6 +456,22 @@ class PDFGenerator {
             const templateEl = document.getElementById('templateType');
             if (templateEl && templateEl.value) {
                 formData.append('templateType', templateEl.value);
+            }
+            if (templateEl && templateEl.value === 'eisvogel') {
+                const tp = document.getElementById('titlepageToggle');
+                const lw = document.getElementById('logoWidth');
+                if (tp && tp.checked) formData.append('titlepage', 'true');
+                if (lw && lw.value.trim()) formData.append('logoWidth', lw.value.trim());
+                const c1 = document.getElementById('titlepageColor');
+                const c2 = document.getElementById('titlepageTextColor');
+                const c3 = document.getElementById('titlepageRuleColor');
+                const tc = document.getElementById('tocColor');
+                const cl = document.getElementById('colorLinksToggle');
+                if (c1 && c1.value) formData.append('titlepageColor', c1.value);
+                if (c2 && c2.value) formData.append('titlepageTextColor', c2.value);
+                if (c3 && c3.value) formData.append('titlepageRuleColor', c3.value);
+                if (tc && tc.value) formData.append('tocColor', tc.value);
+                if (cl && cl.checked) formData.append('colorLinks', 'true');
             }
 
             // Add TOC preferences
@@ -437,6 +555,19 @@ class PDFGenerator {
             btnText.classList.add('d-none');
             btnLoading.classList.remove('d-none');
 
+            // Validate template-specific options (Eisvogel)
+            const tplEl = document.getElementById('templateType');
+            if (tplEl && tplEl.value === 'eisvogel') {
+                if (!this.validateEisvogelSettings || !this.validateEisvogelSettings()) {
+                    this.setProgress(false);
+                    btnText.classList.remove('d-none');
+                    btnLoading.classList.add('d-none');
+                    this.showError('Please correct the highlighted Eisvogel settings.');
+                    this.showToast('error', 'Invalid Eisvogel settings.');
+                    return;
+                }
+            }
+
             const formData = new FormData();
             formData.append('markdownFile', this.markdownInput.files[0]);
             // Include TOC prefs + template (consistency with PDF output)
@@ -444,6 +575,22 @@ class PDFGenerator {
             if (this.tocDepthEl && this.tocDepthEl.value) formData.append('tocDepth', this.tocDepthEl.value);
             const templateEl = document.getElementById('templateType');
             if (templateEl && templateEl.value) formData.append('templateType', templateEl.value);
+            if (templateEl && templateEl.value === 'eisvogel') {
+                const tp = document.getElementById('titlepageToggle');
+                const lw = document.getElementById('logoWidth');
+                if (tp && tp.checked) formData.append('titlepage', 'true');
+                if (lw && lw.value.trim()) formData.append('logoWidth', lw.value.trim());
+                const c1 = document.getElementById('titlepageColor');
+                const c2 = document.getElementById('titlepageTextColor');
+                const c3 = document.getElementById('titlepageRuleColor');
+                const tc = document.getElementById('tocColor');
+                const cl = document.getElementById('colorLinksToggle');
+                if (c1 && c1.value) formData.append('titlepageColor', c1.value);
+                if (c2 && c2.value) formData.append('titlepageTextColor', c2.value);
+                if (c3 && c3.value) formData.append('titlepageRuleColor', c3.value);
+                if (tc && tc.value) formData.append('tocColor', tc.value);
+                if (cl && cl.checked) formData.append('colorLinks', 'true');
+            }
             if (this.logoInput.files[0]) formData.append('logoFile', this.logoInput.files[0]);
 
             const response = await fetch('/preview-pdf', { method: 'POST', body: formData });
@@ -1143,9 +1290,16 @@ class PDFGenerator {
     savePreferences() {
         try {
             const prefs = {
-                templateType: document.getElementById('templateType')?.value || 'consulting',
+                templateType: document.getElementById('templateType')?.value || 'classic',
                 tocEnabled: this.tocEnabledEl ? !!this.tocEnabledEl.checked : true,
                 tocDepth: this.tocDepthEl ? String(this.tocDepthEl.value || '3') : '3',
+                titlepage: document.getElementById('titlepageToggle')?.checked || false,
+                logoWidth: document.getElementById('logoWidth')?.value || '',
+                titlepageColor: document.getElementById('titlepageColor')?.value || '',
+                titlepageTextColor: document.getElementById('titlepageTextColor')?.value || '',
+                titlepageRuleColor: document.getElementById('titlepageRuleColor')?.value || '',
+                tocColor: document.getElementById('tocColor')?.value || '',
+                colorLinks: document.getElementById('colorLinksToggle')?.checked || false,
             };
             localStorage.setItem('mdpdf_prefs', JSON.stringify(prefs));
         } catch {}
@@ -1160,6 +1314,14 @@ class PDFGenerator {
             if (templateEl && prefs.templateType) templateEl.value = prefs.templateType;
             if (this.tocEnabledEl && typeof prefs.tocEnabled === 'boolean') this.tocEnabledEl.checked = prefs.tocEnabled;
             if (this.tocDepthEl && prefs.tocDepth) this.tocDepthEl.value = String(prefs.tocDepth);
+            // Eisvogel specifics
+            const tp = document.getElementById('titlepageToggle'); if (tp && typeof prefs.titlepage === 'boolean') tp.checked = prefs.titlepage;
+            const lw = document.getElementById('logoWidth'); if (lw && typeof prefs.logoWidth === 'string') lw.value = prefs.logoWidth;
+            const c1 = document.getElementById('titlepageColor'); if (c1 && prefs.titlepageColor) c1.value = prefs.titlepageColor;
+            const c2 = document.getElementById('titlepageTextColor'); if (c2 && prefs.titlepageTextColor) c2.value = prefs.titlepageTextColor;
+            const c3 = document.getElementById('titlepageRuleColor'); if (c3 && prefs.titlepageRuleColor) c3.value = prefs.titlepageRuleColor;
+            const tc = document.getElementById('tocColor'); if (tc && prefs.tocColor) tc.value = prefs.tocColor;
+            const cl = document.getElementById('colorLinksToggle'); if (cl && typeof prefs.colorLinks === 'boolean') cl.checked = prefs.colorLinks;
         } catch {}
     }
 
@@ -1206,10 +1368,14 @@ class PDFGenerator {
     }
 
     setupTooltips() {
-        // Initialize Bootstrap tooltips on modal show
+        if (window.bootstrap) {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                bootstrap.Tooltip.getOrCreateInstance(el);
+            });
+        }
         document.addEventListener('shown.bs.modal', (e) => {
-            if (e.target && e.target.id === 'previewModal' && window.bootstrap) {
-                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            if (e.target && window.bootstrap) {
+                e.target.querySelectorAll?.('[data-bs-toggle="tooltip"]').forEach(el => {
                     bootstrap.Tooltip.getOrCreateInstance(el);
                 });
             }
