@@ -182,7 +182,9 @@ fi
 
 # Se il logo è un SVG, prova una conversione automatica in PDF/PNG per compatibilità con XeLaTeX
 if [[ -n "${LOGO:-}" && -f "$LOGO" ]]; then
-  ext="${LOGO##*.}"; ext="${ext,,}"
+  ext="${LOGO##*.}"
+  # Lowercase extension in a portable way (macOS bash 3.x compatible)
+  ext="$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')"
   if [[ "$ext" == "svg" ]]; then
     echo "ℹ️  Rilevato logo SVG: tenterò la conversione per LaTeX"
     base_noext="${LOGO%.*}"
