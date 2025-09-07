@@ -103,7 +103,7 @@ def generate_pdf():
         toc_depth_raw = request.form.get('tocDepth', '3')
         
         # Validate template type
-        if template_type not in ['classic', 'consulting']:
+        if template_type not in ['classic', 'consulting', 'eisvogel']:
             template_type = 'classic'  # Default fallback
 
         # Normalize TOC prefs
@@ -280,7 +280,7 @@ def preview_pdf():
         toc_enabled_raw = request.form.get('tocEnabled', 'true')
         toc_depth_raw = request.form.get('tocDepth', '3')
 
-        if template_type not in ['classic', 'consulting']:
+        if template_type not in ['classic', 'consulting', 'eisvogel']:
             template_type = 'classic'
 
         toc_enabled = str(toc_enabled_raw).lower() in {'1', 'true', 'on', 'yes'}
