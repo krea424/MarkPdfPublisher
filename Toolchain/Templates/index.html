@@ -23,31 +23,88 @@
             <!-- Sidebar -->
             <div class="col-md-3 sidebar">
                 <div class="sidebar-content">
-                    <div class="logo-section logo-right mb-3">
-                        <img class="logo-img" src="{{ url_for('static', filename='assets/BLD_LOGO_Primary_Horizontal_RGB.pdf') }}" alt="MarkLeaf">
+                    <div class="logo-section mb-3">
+                        <img class="logo-img" src="{{ url_for('static', filename='assets/MarkPdfPublisher_logo_transparent.svg') }}?v=1" alt="MarkPdfPublisher">
                     </div>
                     <div class="gradient-divider mb-4" aria-hidden="true"></div>
-                    
-                    <div class="features-list">
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>Pandoc + XeLaTeX powered</span>
+
+                    <!-- Template Settings (Eisvogel) -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="mb-0 text-uppercase small">Template Settings</h6>
+                            <span id="activeTemplateBadge" class="badge bg-light text-dark">—</span>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>Professional templates</span>
+                        <div id="eisvogelSettings" class="card card-body p-3 d-none">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong class="small text-uppercase text-muted">Eisvogel</strong>
+                                <i class="fas fa-feather text-muted" data-bs-toggle="tooltip" data-bs-title="Template LaTeX con title page, logo e colori personalizzabili."></i>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="titlepageToggle" checked>
+                                <label class="form-check-label" for="titlepageToggle">Title page <i class="fas fa-circle-info ms-1 text-muted" data-bs-toggle="tooltip" data-bs-title="Abilita la copertina con titolo, autore, data e logo."></i></label>
+                            </div>
+                            <div class="mb-3">
+                                <label for="logoWidth" class="form-label small mb-1">Logo width <i class="fas fa-circle-info ms-1 text-muted" data-bs-toggle="tooltip" data-bs-title="Esempi: 35mm, 120pt."></i></label>
+                                <input type="text" class="form-control form-control-sm" id="logoWidth" placeholder="35mm">
+                                <div class="invalid-feedback">Usa un valore tipo 35mm, 10pt, 3.5cm, 1.2in.</div>
+                                <small class="text-muted">Suggerimento: 35–45mm su loghi orizzontali.</small>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="titlepageColor" class="form-label small mb-1">Title page color</label>
+                                    <input type="color" class="form-control form-control-color" id="titlepageColor" value="#ffffff">
+                                </div>
+                                <div class="col-6">
+                                    <label for="titlepageTextColor" class="form-label small mb-1">Title text color</label>
+                                    <input type="color" class="form-control form-control-color" id="titlepageTextColor" value="#5f5f5f">
+                                </div>
+                                <div class="col-6">
+                                    <label for="titlepageRuleColor" class="form-label small mb-1">Rule color</label>
+                                    <input type="color" class="form-control form-control-color" id="titlepageRuleColor" value="#435488">
+                                </div>
+                                <div class="col-6">
+                                    <label for="tocColor" class="form-label small mb-1">TOC link color</label>
+                                    <input type="color" class="form-control form-control-color" id="tocColor" value="#2e6bd3">
+                                </div>
+                            </div>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="colorLinksToggle" checked>
+                                <label class="form-check-label" for="colorLinksToggle">Color links</label>
+                            </div>
+                            <div class="d-grid mt-2">
+                                <button type="button" id="eisvogelDefaultsBtn" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-rotate-left me-1"></i> Restore defaults
+                                </button>
+                            </div>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>Custom logo support</span>
+                        <div id="defaultTemplateSettings" class="card card-body p-2">
+                            <small class="text-muted">No extra options for this template.</small>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>Table of contents</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>Headers and footers</span>
+                    </div>
+
+                    <!-- Document Settings -->
+                    <div class="mb-3">
+                        <h6 class="mb-2 text-uppercase small">Document Settings</h6>
+                        <div class="card card-body p-3">
+                            <label class="form-label fw-bold small mb-1"><i class="fas fa-list-ul me-2"></i>Table of Contents</label>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="tocEnabled" checked>
+                                <label class="form-check-label" for="tocEnabled">Enable Table of Contents</label>
+                            </div>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-auto">
+                                    <label for="tocDepth" class="col-form-label">Depth</label>
+                                </div>
+                                <div class="col-auto">
+                                    <select id="tocDepth" class="form-select form-select-sm">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3" selected>3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,6 +137,14 @@
                                                 <option value="consulting" selected>Consulting (Blue)</option>
                                                 <option value="executive">Executive (Light Blue)</option>
                                                 <option value="neutral">Neutral (Gray)</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex align-items-center m-0">
+                                            <label for="templateType" class="me-2 text-muted small">Template</label>
+                                            <select class="form-select form-select-sm" id="templateType" name="templateType">
+                                                <option value="consulting">Consulting (Premium)</option>
+                                                <option value="classic" selected>Classic (Clean)</option>
+                                                <option value="eisvogel">Eisvogel (LaTeX)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -163,22 +228,7 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- Template Selection -->
-                                        <div class="mb-4">
-                                            <label for="templateType" class="form-label fw-bold">
-                                                <i class="fas fa-palette me-2"></i>
-                                                Template Style
-                                            </label>
-                                            <select class="form-select" id="templateType" name="templateType">
-                                                <option value="consulting">Consulting Style (Premium design with gray table headers)</option>
-                                                <option value="classic" selected>Classic Style (Clean and simple design)</option>
-                                                <option value="eisvogel">Eisvogel (LaTeX template; professional title page, headers/footers)</option>
-                                            </select>
-                                            <small class="text-muted">
-                                                <strong>Consulting:</strong> Professional design inspired by major consulting firms with enhanced table styling<br>
-                                                <strong>Classic:</strong> Clean, simple design focused on readability
-                                            </small>
-                                        </div>
+                                        <!-- Template Selection moved to header -->
 
                                         <!-- TOC Options -->
                                         <div class="mb-4">
@@ -236,15 +286,19 @@
                                 </div>
                             </div>
                             
-                            <!-- Instructions -->
-                            <div class="card mt-4">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Istruzioni
+                            <!-- Instructions (collapsible ghost card) -->
+                            <div class="card card-ghost mt-4" id="instructionsCard">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="mb-0 d-flex align-items-center gap-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Istruzioni</span>
                                     </h5>
+                                    <button type="button" id="toggleInstructionsBtn" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#instructionsCollapse" aria-expanded="true" aria-controls="instructionsCollapse">
+                                        <i class="fas fa-chevron-up me-1"></i> Nascondi
+                                    </button>
                                 </div>
-                                <div class="card-body">
+                                <div id="instructionsCollapse" class="collapse show">
+                                  <div class="card-body">
                                     <ol class="mb-0">
                                         <li class="mb-2">
                                             <strong>Carica Markdown:</strong> seleziona o trascina il tuo file .md con il contenuto.
@@ -259,6 +313,7 @@
                                             <strong>Download:</strong> il PDF viene scaricato automaticamente al termine.
                                         </li>
                                     </ol>
+                                  </div>
                                 </div>
                             </div>
                         </div>
