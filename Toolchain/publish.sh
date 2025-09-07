@@ -87,24 +87,86 @@ INPUT_MD="${1:-}"
 [[ -f "$INPUT_MD" ]] || die "Errore: file Markdown non trovato: $INPUT_MD"
 
 # ----- Path template & asset -----
+###### Template selection and layout ######
 # Validate template type
-if [[ "$TEMPLATE_TYPE" != "classic" && "$TEMPLATE_TYPE" != "consulting" ]]; then
+if [[ "$TEMPLATE_TYPE" != "classic" && "$TEMPLATE_TYPE" != "consulting" && "$TEMPLATE_TYPE" != "eisvogel" ]]; then
   echo "⚠️  Template type '$TEMPLATE_TYPE' non valido, uso 'consulting' come default"
   TEMPLATE_TYPE="consulting"
 fi
 
-# Set template directory based on type
+# Set template directory and files based on type
 TEMPLATE_DIR="$SCRIPT_DIR/Templates/$TEMPLATE_TYPE"
 export TEXINPUTS="${TEMPLATE_DIR}:${TEXINPUTS:-}"
-DEFAULT_TEX="$TEMPLATE_DIR/default.tex"
-HEADER_FOOTER_TEX="$TEMPLATE_DIR/header_footer.tex"
-COVER_TEX="$TEMPLATE_DIR/cover.tex"
+
+if [[ "$TEMPLATE_TYPE" == "eisvogel" ]]; then
+  # Eisvogel uses a single template file and handles titlepage/header/footer internally
+  # Support both upstream filename variants: eisvogel.tex or eisvogel.latex
+  if [[ -f "$TEMPLATE_DIR/eisvogel.tex" ]]; then
+    DEFAULT_TEX="$TEMPLATE_DIR/eisvogel.tex"
+  elif [[ -f "$TEMPLATE_DIR/eisvogel.latex" ]]; then
+    DEFAULT_TEX="$TEMPLATE_DIR/eisvogel.latex"
+  else
+    die "Template Eisvogel non trovato: atteso 'eisvogel.tex' o 'eisvogel.latex' in $TEMPLATE_DIR"
+  fi
+  HEADER_FOOTER_TEX=""
+  COVER_TEX=""
+else
+  DEFAULT_TEX="$TEMPLATE_DIR/default.tex"
+  HEADER_FOOTER_TEX="$TEMPLATE_DIR/header_footer.tex"
+  COVER_TEX="$TEMPLATE_DIR/cover.tex"
+fi
 
 echo "📋 Using template style: $TEMPLATE_TYPE"
 
-[[ -f "$DEFAULT_TEX" ]] || die "Template default.tex non trovato: $DEFAULT_TEX"
-[[ -f "$HEADER_FOOTER_TEX" ]] || die "Template header_footer.tex non trovato: $HEADER_FOOTER_TEX"
-[[ -f "$COVER_TEX" ]] || die "Template cover.tex non trovato: $COVER_TEX"
+# Preflight check: required files vary by template type
+if [[ "$TEMPLATE_TYPE" == "eisvogel" ]]; then
+  [[ -f "$DEFAULT_TEX" ]] || die "Template Eisvogel non trovato: $DEFAULT_TEX"
+  # Resolve data for Eisvogel partials. We support either an upstream
+  # 'templates/' folder OR the 'template-multi-file/' layout from the ZIP.
+  # We will prepare a local data-dir in the working directory and copy partials there.
+  CAND_FILE="$(find "$TEMPLATE_DIR" -maxdepth 3 -type f -name 'eisvogel-added.latex' 2>/dev/null | head -n 1 || true)"
+  if [[ -z "$CAND_FILE" ]]; then
+    echo "❌ Mancano i file aggiuntivi di Eisvogel (eisvogel-added.latex non trovato)" >&2
+    echo "   Assicurati di aver scaricato anche i file parziali (templates o template-multi-file)." >&2
+    die "Eisvogel templates mancanti"
+  fi
+  EIS_PARTIALS_DIR="$(cd "$(dirname "$CAND_FILE")" && pwd)"
+  # Prepare local data-dir under current working dir (publish.sh is run with cwd=temp_dir)
+  EISVOGEL_DATA_DIR="$PWD/eisvogel-data"
+  mkdir -p "$EISVOGEL_DATA_DIR/templates"
+  # Copy all partials (.latex) into data-dir/templates
+  cp -f "$EIS_PARTIALS_DIR"/*.latex "$EISVOGEL_DATA_DIR/templates/" 2>/dev/null || true
+  # Sanity check
+  [[ -f "$EISVOGEL_DATA_DIR/templates/eisvogel-added.latex" ]] || die "Setup parziali Eisvogel fallito: file mancanti in $EISVOGEL_DATA_DIR/templates"
+
+  # Style tweak: place title page logo above the centered title instead of below-left.
+  # We patch the copied 'eisvogel-title-page.latex' in the temp data-dir so upstream files remain untouched.
+  if [[ -f "$EISVOGEL_DATA_DIR/templates/eisvogel-title-page.latex" ]]; then
+    awk '
+      BEGIN { inserted=0; skip=0 }
+      /\\makebox\[0pt\]\[l\]\{\\colorRule/ && inserted==0 {
+        print $0;
+        print "$if(titlepage-logo)$";
+        print "\\begin{center}";
+        print "\\includegraphics[width=$if(logo-width)$$logo-width$$else$35mm$endif$]{$titlepage-logo$}";
+        print "\\end{center}";
+        print "\\vspace{1em}";
+        print "$endif$";
+        inserted=1;
+        next
+      }
+      /^\$if\(titlepage-logo\)\$/ { skip=1; next }
+      skip==1 && /^\$endif\$/ { skip=0; next }
+      skip==1 { next }
+      { print $0 }
+    ' "$EISVOGEL_DATA_DIR/templates/eisvogel-title-page.latex" > "$EISVOGEL_DATA_DIR/templates/.eisvogel-title-page.patched" && \
+    mv "$EISVOGEL_DATA_DIR/templates/.eisvogel-title-page.patched" "$EISVOGEL_DATA_DIR/templates/eisvogel-title-page.latex" || true
+  fi
+else
+  [[ -f "$DEFAULT_TEX" ]] || die "Template default.tex non trovato: $DEFAULT_TEX"
+  [[ -f "$HEADER_FOOTER_TEX" ]] || die "Template header_footer.tex non trovato: $HEADER_FOOTER_TEX"
+  [[ -f "$COVER_TEX" ]] || die "Template cover.tex non trovato: $COVER_TEX"
+fi
 
 # Verifica logo (usa quello passato o fallback al default se esiste)
 if [[ ! -f "$LOGO" ]]; then
@@ -118,10 +180,39 @@ if [[ ! -f "$LOGO" ]]; then
   fi
 fi
 
+# Se il logo è un SVG, prova una conversione automatica in PDF/PNG per compatibilità con XeLaTeX
+if [[ -n "${LOGO:-}" && -f "$LOGO" ]]; then
+  ext="${LOGO##*.}"; ext="${ext,,}"
+  if [[ "$ext" == "svg" ]]; then
+    echo "ℹ️  Rilevato logo SVG: tenterò la conversione per LaTeX"
+    base_noext="${LOGO%.*}"
+    if command -v rsvg-convert >/dev/null 2>&1; then
+      out_pdf="${base_noext}.pdf"
+      rsvg-convert -f pdf -o "$out_pdf" "$LOGO" && LOGO="$out_pdf" && echo "✅ Convertito SVG→PDF con rsvg-convert: $LOGO" || true
+    fi
+    if [[ "${LOGO##*.}" == "svg" ]] && command -v inkscape >/dev/null 2>&1; then
+      out_pdf="${base_noext}.pdf"
+      inkscape "$LOGO" --export-type=pdf --export-filename="$out_pdf" && LOGO="$out_pdf" && echo "✅ Convertito SVG→PDF con Inkscape: $LOGO" || true
+    fi
+    if [[ "${LOGO##*.}" == "svg" ]] && command -v magick >/dev/null 2>&1; then
+      out_png="${base_noext}.png"
+      magick -density 300 "$LOGO" -background none -flatten "$out_png" && LOGO="$out_png" && echo "✅ Convertito SVG→PNG con ImageMagick: $LOGO" || true
+    elif [[ "${LOGO##*.}" == "svg" ]] && command -v convert >/dev/null 2>&1; then
+      out_png="${base_noext}.png"
+      convert -density 300 "$LOGO" -background none -flatten "$out_png" && LOGO="$out_png" && echo "✅ Convertito SVG→PNG con ImageMagick: $LOGO" || true
+    fi
+    if [[ "${LOGO##*.}" == "svg" ]]; then
+      echo "❌ Immagine SVG non supportata senza strumenti di conversione (rsvg-convert/inkscape/ImageMagick)." >&2
+      echo "   Suggerimenti: 'brew install librsvg' oppure 'brew install --cask inkscape' oppure 'brew install imagemagick'." >&2
+      echo "   In alternativa carica un logo PDF/PNG/JPG. Procedo senza logo." >&2
+      LOGO=""
+    fi
+  fi
+fi
+
 # === A) Preflight file chiave ===
-for f in "$DEFAULT_TEX" "$HEADER_FOOTER_TEX" "$COVER_TEX" "$INPUT_MD"; do
-  [ -f "$f" ] || die "Manca file richiesto: $f"
-done
+# Template files are validated above per template type; here ensure input exists.
+[ -f "$INPUT_MD" ] || die "Manca file richiesto: $INPUT_MD"
 
 # Rende disponibili i template anche a XeLaTeX
 export TEXINPUTS="${TEMPLATE_DIR}:$TEXINPUTS"
@@ -177,11 +268,21 @@ PANDOC_ARGS=(
   --from markdown
   --pdf-engine=xelatex
   --template "$DEFAULT_TEX"
-  --include-in-header "$HEADER_FOOTER_TEX"
-  --include-before-body "$COVER_TEX"
   --resource-path "$RESOURCE_PATH"
   -o "$OUTPUT_PDF"
 )
+
+# Include header/cover only for classic/consulting templates
+if [[ "$TEMPLATE_TYPE" != "eisvogel" ]]; then
+  PANDOC_ARGS+=(--include-in-header "$HEADER_FOOTER_TEX" --include-before-body "$COVER_TEX")
+fi
+
+# Eisvogel: prefer LaTeX 'listings' for code blocks to avoid missing Highlighting macros
+if [[ "$TEMPLATE_TYPE" == "eisvogel" ]]; then
+  # Point Pandoc data-dir to the folder that contains a 'templates/' subdir
+  PANDOC_ARGS+=(--data-dir "$EISVOGEL_DATA_DIR")
+  PANDOC_ARGS+=(--listings)
+fi
 
 # Abilita TOC se richiesto
 if [[ "$ENABLE_TOC" -eq 1 ]]; then
@@ -190,7 +291,16 @@ fi
 
 # Aggiungi logo solo se il file esiste
 if [[ -n "$LOGO" && -f "$LOGO" ]]; then
-  PANDOC_ARGS+=(--variable logo="$LOGO")
+  if [[ "$TEMPLATE_TYPE" == "eisvogel" ]]; then
+    # Eisvogel expects 'titlepage-logo' on the title page.
+    # Pass a basename so LaTeX resolves it relative to the working dir (temp_dir).
+    LOGO_BASENAME="$(basename "$LOGO")"
+    PANDOC_ARGS+=(-V "titlepage-logo=$LOGO_BASENAME")
+    # Also pass generic 'logo' for compatibility with other template logic
+    PANDOC_ARGS+=(-V "logo=$LOGO_BASENAME")
+  else
+    PANDOC_ARGS+=(--variable logo="$LOGO")
+  fi
 fi
 
 pandoc "${PANDOC_ARGS[@]}" || die "Errore durante la generazione del PDF"
