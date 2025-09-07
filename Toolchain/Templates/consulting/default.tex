@@ -82,6 +82,11 @@ $endif$
 % Code block styling (Shaded environment)
 \definecolor{shadecolor}{RGB}{248,248,248}
 \newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+
+% Pandoc highlighting macros (define Highlighting environment, etc.)
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
 

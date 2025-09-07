@@ -73,6 +73,11 @@ $endif$
 \definecolor{shadecolor}{RGB}{248,248,248}
 \newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
 
+% Pandoc highlighting macros (define Highlighting environment, etc.)
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
 % Clean table spacing
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.2}
