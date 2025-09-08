@@ -1,0 +1,89 @@
+name: Bug report
+description: Segnala un malfunzionamento o un comportamento inatteso.
+title: "[Bug]: breve descrizione"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Grazie per il tuo contributo! Compila i campi seguenti per aiutarci a riprodurre e risolvere il problema.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Descrizione breve
+      description: Spiega in una o due frasi qual è il problema.
+      placeholder: Es. L'esportazione PDF fallisce con template X
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passi per riprodurre
+      description: Elenca i passaggi necessari per vedere il bug.
+      placeholder: |
+        1. Vai a ...
+        2. Clicca su ...
+        3. Osserva ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento atteso
+      description: Cosa ti aspettavi che succedesse?
+      placeholder: Es. Il file PDF viene generato senza errori
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento effettivo
+      description: Cosa succede realmente? Includi messaggi d'errore se presenti.
+      placeholder: Es. Errore "Template not found" in console
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Gravità
+      description: Valuta l'impatto del problema.
+      options:
+        - minor
+        - major
+        - critical
+      default: 1
+
+  - type: input
+    id: version
+    attributes:
+      label: Versione/app build
+      description: Indica la versione dell'app o il tag (se noto).
+      placeholder: Es. v1.2.0 o commit abc1234
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Sistema operativo, versione di Python/Node, ecc.
+      placeholder: Es. macOS 14.5, Python 3.11, wkhtmltopdf 0.12.6
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log/Output rilevante
+      description: Incolla log o stack trace (eventualmente in un gist) e screenshot.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: Ho cercato issue simili aperte/chiuse
+        - label: Ho fornito passi di riproduzione chiari
+        - label: Ho indicato versione/ambiente
