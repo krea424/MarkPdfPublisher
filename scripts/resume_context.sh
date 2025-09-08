@@ -45,9 +45,6 @@ if [[ -n "${TRANSCRIPT:-}" && -f "$TRANSCRIPT" ]]; then
   echo "$TRANSCRIPT"
   echo "--- Transcript head (first 250 lines) ---"
   sed -n '1,250p' "$TRANSCRIPT"
-  echo
-  echo "--- Transcript tail (last 120 lines) ---"
-  tail -n 120 "$TRANSCRIPT"
 else
   echo
   echo "No transcript found in $TX_DIR"
@@ -64,13 +61,6 @@ else
   echo "No summary file found in $DOCS_DIR"
 fi
 
-EXEC_SUMMARY="$DOCS_DIR/EXEC_SUMMARY.md"
-if [[ -f "$EXEC_SUMMARY" ]]; then
-  echo
-  echo "--- Project EXEC_SUMMARY (first 200 lines) ---"
-  echo "$EXEC_SUMMARY"
-  sed -n '1,200p' "$EXEC_SUMMARY"
-fi
-
 echo
 echo "(Copy the above into Codex to resume.)"
+

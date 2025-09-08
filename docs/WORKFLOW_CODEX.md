@@ -161,11 +161,6 @@ Per comodità puoi usare uno script che esegue i comandi read-only del Resume v3
 /Users/moromoro/Desktop/MarkPdfPublisher/scripts/resume_context.sh
 ```
 
-Output incluso:
-- Transcript head (prime 250 righe) e tail (ultime 120)
-- Summary head (prime 250 righe) del file di oggi o di ieri
-- EXEC_SUMMARY.md (prime 200 righe), se presente
-
 ---
 
 ## 6) Sanitizer (quando e cosa fa)
