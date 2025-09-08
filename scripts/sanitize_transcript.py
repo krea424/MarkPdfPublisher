@@ -12,6 +12,11 @@ txt = path.read_text(encoding="utf-8")
 hdr = re.compile(r'^## (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+\-]\d{2}:\d{2}) — (user|codex)$', re.M)
 parts, matches = [], list(hdr.finditer(txt))
 
+# Se non ci sono blocchi strutturati, non riscrivere il file: evita di perdere contenuto
+if not matches:
+    print("No structured blocks found; leaving file unchanged.")
+    sys.exit(0)
+
 for i, h in enumerate(matches):
     start = h.end()
     end = matches[i+1].start() if i+1 < len(matches) else len(txt)
@@ -21,19 +26,14 @@ for i, h in enumerate(matches):
     if role == "user":
         out_lines = []
         for ln in body.splitlines():
-            # rimuovi rumore (tabelle, heading IDE, liste, marker patch)
-            if ln.strip().startswith("|") or ("|" in ln):
-                continue
-            if re.match(r'^\s*#{1,6}\s', ln):
-                continue
+            # Rimuovi solo rumore chiaramente identificabile dai blocchi IDE/patch,
+            # ma conserva headings, liste e tabelle dell'utente.
             if re.match(r'^\s*(Active file|Open tabs|Active selection of the file):', ln, re.I):
-                continue
-            if re.match(r'^\s*[-*]\s', ln):
                 continue
             if ln.strip() in {"@@", "*** End Patch", "*** Begin Patch"}:
                 continue
             out_lines.append(ln)
-        # comprimi righe vuote multiple
+        # comprimi righe vuote multiple mantenendo il contenuto
         body = re.sub(r'\n{3,}', '\n\n', "\n".join(out_lines)).strip() + "\n"
 
     parts.append((ts, role, body))
