@@ -6,7 +6,11 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
-### Added
+
+
+## [0.1.0] - Initial release 8.9.2025
+- Baseline feature set and working app skeleton.
+- ### Added
 - Enforce core pre-commit hooks (trailing whitespace, end-of-file, line endings) and CI step.
 
 ### Changed
@@ -14,6 +18,3 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ### Removed
 - Legacy/duplicated workflow backup files eliminated during conflict resolution.
-
-## [0.1.0] - Initial release
-- Baseline feature set and working app skeleton.
