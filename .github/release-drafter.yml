@@ -1,0 +1,31 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: 'Features'
+    labels: ['feat', 'feature']
+  - title: 'Bug Fixes'
+    labels: ['fix', 'bug']
+  - title: 'Documentation'
+    labels: ['docs']
+  - title: 'Refactoring'
+    labels: ['refactor']
+  - title: 'Tests'
+    labels: ['test']
+  - title: 'Build/CI'
+    labels: ['build', 'ci']
+  - title: 'Chores'
+    labels: ['chore']
+change-template: '- $TITLE (#$NUMBER) — @$AUTHOR'
+change-title-escapes: '\\'  # escape backslashes
+exclude-labels: ['skip-changelog']
+version-resolver:
+  major:
+    labels: ['major', 'breaking-change']
+  minor:
+    labels: ['minor', 'feat']
+  patch:
+    labels: ['patch', 'fix', 'chore', 'docs', 'refactor', 'test', 'ci']
+template: |
+  ## Changes
+  $CHANGES
+
