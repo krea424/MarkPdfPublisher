@@ -17,4 +17,3 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [0.1.0] - Initial release
 - Baseline feature set and working app skeleton.
-
