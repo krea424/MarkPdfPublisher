@@ -125,3 +125,65 @@ echo "$SUMMARY"; sed -n '1,250p' "$SUMMARY"
 
 nginx
 Copy code
+
+## 5ter) Resume Prompt v3 (ieri/oggi fallback, read-only)
+Usa questo prompt aggiornato quando riapri Cursor: legge i percorsi standard e, se disponibili, preferisce i file di ieri (Europe/Rome) per riprendere il contesto anche dopo uno “stacco di giornata”.
+
+**Prompt da incollare in Codex:**
+Resume from saved context (read-only only). Paths are FIXED — do NOT scan the repo.
+
+Locations:
+- Transcript files: docs/CODEX_TRANSCRIPTS/*.md (one per day: YYYY-MM-DD.md)
+- Summary files: docs/CODEX_SESSION_LOG_YYYY-MM-DD.md (one per day)
+
+What to do (read-only):
+- Prefer yesterday’s files (Europe/Rome) if they exist, else use today’s, else fallback to newest by mtime.
+- Produce: Recent goals/decisions (≤8), Open questions (≤5), Next 3 actions (with file paths).
+- Ask me EXACTLY ONE clarifying question. Redact secrets-like strings.
+
+Proposed read-only commands (ask before running, wait for my “y”):
+
+```bash
+# Compute DAY/YDAY (Europe/Rome) in a portable way
+DAY=$(TZ=Europe/Rome date +%F)
+YDAY=$(python3 - <<'PY'
+from datetime import datetime, timedelta
+try:
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo('Europe/Rome')
+except Exception:
+    tz = None
+now = datetime.now(tz) if tz else datetime.now()
+print((now - timedelta(days=1)).date().isoformat())
+PY
+)
+
+# Pick transcript: prefer YDAY if present, else latest by mtime
+TRANSCRIPT="docs/CODEX_TRANSCRIPTS/${YDAY}.md"
+if [ ! -f "$TRANSCRIPT" ]; then
+  TRANSCRIPT=$(ls -t docs/CODEX_TRANSCRIPTS/*.md 2>/dev/null | head -n 1)
+fi
+echo "$TRANSCRIPT"; sed -n '1,250p' "$TRANSCRIPT"
+
+# Pick summary: prefer TODAY, else YDAY, else newest
+SUMMARY="docs/CODEX_SESSION_LOG_${DAY}.md"
+if [ ! -f "$SUMMARY" ]; then
+  ALT="docs/CODEX_SESSION_LOG_${YDAY}.md"
+  if [ -f "$ALT" ]; then SUMMARY="$ALT"; else SUMMARY=$(ls -t docs/CODEX_SESSION_LOG_*.md 2>/dev/null | head -n 1); fi
+fi
+echo "$SUMMARY"; sed -n '1,250p' "$SUMMARY"
+```
+
+Suggerimento: esegui prima `scripts/start_session.sh` quando riapri Cursor, così i file del giorno vengono creati se mancanti.
+
+---
+
+## 5quater) Start/Close session (operativo)
+- All’apertura di Cursor: crea i file del giorno (idempotente)
+  ```bash
+  /Users/moromoro/Desktop/MarkPdfPublisher/scripts/start_session.sh
+  ```
+- Alla chiusura (dopo aver scritto STOPLOG in Codex): sanitize + riepilogo
+  ```bash
+  /Users/moromoro/Desktop/MarkPdfPublisher/scripts/close_session.sh
+  ```
