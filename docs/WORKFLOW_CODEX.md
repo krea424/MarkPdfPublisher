@@ -1,10 +1,3 @@
-# Backup — WORKFLOW_CODEX.md (Europe/Rome)
-
-Questa copia contiene le stesse istruzioni operative del file principale.
-Usala se `docs/WORKFLOW_CODEX.md` viene rimosso accidentalmente.
-
-—
-
 # Workflow “Session logging + resume” (Europe/Rome)
 
 ## 1) Dove finiscono i dati
@@ -161,6 +154,15 @@ Suggerimento: all’apertura esegui prima `scripts/start_session.sh` così i fil
 
 ---
 
+## 5quinquies) Resume helper script (read-only)
+Per comodità puoi usare uno script che esegue i comandi read-only del Resume v3 e stampa lo snapshot pronto da copiare in Codex.
+
+```bash
+/Users/moromoro/Desktop/MarkPdfPublisher/scripts/resume_context.sh
+```
+
+---
+
 ## 6) Sanitizer (quando e cosa fa)
 Eseguilo dopo STOPLOG o se vedi “rumore” (tabelle/contesto IDE nei blocchi user):
 
@@ -193,4 +195,3 @@ python3 scripts/sanitize_transcript.py
 # Chiusura sessione (STOPLOG prima!)
 scripts/close_session.sh
 ```
-
