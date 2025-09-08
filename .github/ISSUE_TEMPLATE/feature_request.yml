@@ -1,0 +1,77 @@
+name: Feature request
+description: Proponi una nuova funzionalità o un miglioramento.
+title: "[Feat]: breve descrizione"
+labels: [feature]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descrivi il bisogno e la soluzione proposta. Più dettagli = migliore valutazione.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema/opportunità
+      description: Quale problema risolve? Qual è il valore per l'utente?
+      placeholder: Es. Gli utenti non possono ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Soluzione proposta
+      description: Descrivi la funzionalità e il comportamento desiderato.
+      placeholder: Es. Aggiungere un comando `markpdf publish --dry-run`...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative considerate
+      description: Esistono altre soluzioni possibili? Pro e contro.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priorità suggerita
+      options:
+        - low
+        - medium
+        - high
+      default: 1
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Seleziona il componente interessato (se noto).
+      options:
+        - cli
+        - pdf
+        - ui
+        - core
+        - altro
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criteri di accettazione
+      description: Condizioni verificabili per considerare la feature completa.
+      placeholder: Es. Dato X, quando Y, allora Z...
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Note aggiuntive / mockup / link
+      description: Aggiungi screenshot, wireframe, riferimenti.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: Ho verificato che non esista già un'issue simile
+        - label: La proposta è coerente con la roadmap/vision
+
