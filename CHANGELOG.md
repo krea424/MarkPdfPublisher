@@ -12,4 +12,3 @@ Removed
 Legacy/duplicated workflow backup files eliminated during conflict resolution.
 Notes
 Baseline feature set and working app skeleton.
-
