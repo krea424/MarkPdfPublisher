@@ -22,6 +22,7 @@ except Exception:
 logging.basicConfig(level=logging.DEBUG)
 
 BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BASE_DIR.parent
 
 app = Flask(
     __name__,
@@ -39,6 +40,24 @@ db = SQLAlchemy(app)
 UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
 ALLOWED_MARKDOWN_EXTENSIONS = {'md'}
 ALLOWED_LOGO_EXTENSIONS = {'png', 'svg', 'pdf', 'jpg', 'jpeg'}
+
+
+def get_app_version() -> str:
+    """Read app version from VERSION file at repo root.
+    Fallback to '0.0.0' if not available.
+    """
+    try:
+        version_path = ROOT_DIR / 'VERSION'
+        if version_path.exists():
+            return version_path.read_text(encoding='utf-8').strip() or '0.0.0'
+    except Exception as e:
+        logging.warning(f"Could not read VERSION file: {e}")
+    return '0.0.0'
+
+
+@app.context_processor
+def inject_app_version():
+    return {"app_version": get_app_version()}
 
 
 class Job(db.Model):
