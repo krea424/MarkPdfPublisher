@@ -43,7 +43,7 @@ class PDFGenerator {
         this.navHotspotLeft = document.getElementById('navHotspotLeft');
         this.navHotspotRight = document.getElementById('navHotspotRight');
         this.resetUiBtn = document.getElementById('resetUiBtn');
-        
+
         this.flip = null; // flipbook state
         this.audioCtx = null;
 
@@ -306,7 +306,7 @@ class PDFGenerator {
 
     setupDragAndDrop() {
         const uploadAreas = document.querySelectorAll('.upload-area');
-        
+
         uploadAreas.forEach(area => {
             area.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -321,19 +321,19 @@ class PDFGenerator {
             area.addEventListener('drop', (e) => {
                 e.preventDefault();
                 area.classList.remove('dragover');
-                
+
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
                     const file = files[0];
                     const inputId = area.id.replace('UploadArea', 'File');
                     const input = document.getElementById(inputId);
-                    
+
                     // Validate file type
                     if (this.validateFile(file, inputId)) {
                         const dataTransfer = new DataTransfer();
                         dataTransfer.items.add(file);
                         input.files = dataTransfer.files;
-                        
+
                         const fileType = inputId === 'markdownFile' ? 'markdown' : 'logo';
                         this.handleFileSelect(input, fileType);
                     }
@@ -385,7 +385,7 @@ class PDFGenerator {
         const fileInfo = document.getElementById(`${fileType}FileInfo`);
         const fileName = fileInfo.querySelector('.file-name');
         const fileSize = fileInfo.querySelector('.file-size');
-        
+
         fileName.textContent = file.name;
         if (fileSize) {
             fileSize.textContent = `(${this.humanFileSize(file.size)})`;
@@ -397,7 +397,7 @@ class PDFGenerator {
         const input = document.getElementById(inputId);
         const fileType = inputId.replace('File', '');
         const fileInfo = document.getElementById(`${fileType}FileInfo`);
-        
+
         input.value = '';
         fileInfo.classList.add('d-none');
         this.updateGenerateButton();
@@ -441,12 +441,12 @@ class PDFGenerator {
             }
 
             const formData = new FormData();
-            
+
             // Add markdown file
             if (this.markdownInput.files[0]) {
                 formData.append('markdownFile', this.markdownInput.files[0]);
             }
-            
+
             // Add logo file if selected
             if (this.logoInput.files[0]) {
                 formData.append('logoFile', this.logoInput.files[0]);
@@ -491,12 +491,12 @@ class PDFGenerator {
                 // Handle successful PDF generation
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
-                
+
                 // Create download link
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                
+
                 // Get filename from response headers or use default
                 const contentDisposition = response.headers.get('Content-Disposition');
                 let filename = 'document.pdf';
@@ -506,29 +506,29 @@ class PDFGenerator {
                         filename = filenameMatch[1];
                     }
                 }
-                
+
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
-                
+
                 // Cleanup
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                
+
                 this.showSuccess('PDF generated successfully and download started!');
                 this.showToast('success', 'PDF generated and downloaded.');
-                
+
             } else {
                 // Handle error response
                 const errorData = await response.json();
                 this.showError(errorData.error || 'An error occurred while generating the PDF.');
-                
+
                 if (errorData.details) {
                     console.error('PDF Generation Error Details:', errorData.details);
                 }
                 this.showToast('error', errorData.error || 'Failed to generate PDF.');
             }
-            
+
         } catch (error) {
             console.error('Network or parsing error:', error);
             this.showError('A network error occurred. Please check your connection and try again.');
@@ -1159,7 +1159,7 @@ class PDFGenerator {
     setLoading(isLoading) {
         const btnText = this.generateBtn.querySelector('.btn-text');
         const btnLoading = this.generateBtn.querySelector('.btn-loading');
-        
+
         if (isLoading) {
             btnText.classList.add('d-none');
             btnLoading.classList.remove('d-none');
@@ -1175,7 +1175,7 @@ class PDFGenerator {
         const errorMessage = document.getElementById('errorMessage');
         errorMessage.textContent = message;
         this.errorAlert.classList.remove('d-none');
-        
+
         // Scroll to error
         this.errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -1188,7 +1188,7 @@ class PDFGenerator {
         const successMessage = document.getElementById('successMessage');
         successMessage.textContent = message;
         this.successAlert.classList.remove('d-none');
-        
+
         // Auto-hide after 5 seconds
         setTimeout(() => {
             this.hideSuccess();

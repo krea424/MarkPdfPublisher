@@ -41,4 +41,3 @@ else
 fi
 
 echo "Start session done for DAY=${DAY} (Europe/Rome)."
-

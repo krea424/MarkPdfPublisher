@@ -24,4 +24,3 @@
 ## Health/Monitoring
 
 - Aggiungere endpoint `/healthz` (TODO) e metrics (es. Prometheus) in fase 2.
-

@@ -30,4 +30,3 @@ def get_config() -> type[BaseConfig]:
     if env == "production":
         return ProductionConfig
     return DevelopmentConfig
-

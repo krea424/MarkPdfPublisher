@@ -109,18 +109,18 @@ def index():
 def generate_pdf():
     """Handle PDF generation request"""
     temp_dir = None
-    
+
     try:
         # Check if markdown file is present
         if 'markdownFile' not in request.files:
             return jsonify({'error': 'No markdown file provided'}), 400
-        
+
         markdown_file = request.files['markdownFile']
         logo_file = request.files.get('logoFile')
         template_type = request.form.get('templateType', 'classic')  # Default to classic
         toc_enabled_raw = request.form.get('tocEnabled', 'true')
         toc_depth_raw = request.form.get('tocDepth', '3')
-        
+
         # Validate template type
         if template_type not in ['classic', 'consulting', 'eisvogel']:
             template_type = 'classic'  # Default fallback
@@ -133,33 +133,33 @@ def generate_pdf():
             toc_depth = 3
         if toc_depth < 1 or toc_depth > 6:
             toc_depth = 3
-        
+
         # Validate markdown file
         if markdown_file.filename == '':
             return jsonify({'error': 'No markdown file selected'}), 400
-        
+
         if not allowed_file(markdown_file.filename, ALLOWED_MARKDOWN_EXTENSIONS):
             return jsonify({'error': 'Invalid markdown file format. Only .md files are allowed.'}), 400
-        
+
         # Validate logo file if provided
         if logo_file and logo_file.filename != '':
             if not allowed_file(logo_file.filename, ALLOWED_LOGO_EXTENSIONS):
                 return jsonify({'error': 'Invalid logo file format. Allowed formats: PNG, SVG, PDF, JPG, JPEG'}), 400
-        
+
         # Create temporary directory
         temp_dir = create_temp_directory()
         logging.info(f"Created temporary directory: {temp_dir}")
-        
+
         # Save markdown file
         markdown_filename = secure_filename(markdown_file.filename)
         markdown_path = os.path.join(temp_dir, markdown_filename)
         markdown_file.save(markdown_path)
         logging.info(f"Saved markdown file: {markdown_path}")
-        
+
         # Prepare command arguments (resolve publish.sh relative to this file)
         script_path = str(BASE_DIR / 'publish.sh')
         cmd_args = ['/bin/bash', script_path, markdown_path]
-        
+
         # Save logo file if provided and add to command
         if logo_file and logo_file.filename != '':
             logo_filename = secure_filename(logo_file.filename)
@@ -167,7 +167,7 @@ def generate_pdf():
             logo_file.save(logo_path)
             logging.info(f"Saved logo file: {logo_path}")
             cmd_args.extend(['--logo', logo_path])
-        
+
         # Add template type to command
         cmd_args.extend(['--template', template_type])
         logging.info(f"Using template type: {template_type}")
@@ -178,7 +178,7 @@ def generate_pdf():
             cmd_args.extend(['--toc-depth', str(toc_depth)])
         else:
             cmd_args.append('--no-toc')
-        
+
         # Execute publish.sh script
         logging.info(f"Executing command: {' '.join(cmd_args)}")
         # Persist job
@@ -205,7 +205,7 @@ def generate_pdf():
             cwd=temp_dir,
             text=True
         )
-        
+
         try:
             stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
         except subprocess.TimeoutExpired:
@@ -220,7 +220,7 @@ def generate_pdf():
                 except Exception:
                     db.session.rollback()
             return jsonify({'error': 'PDF generation timed out', 'details': 'The conversion process took too long and was terminated. Please try with a smaller document.'}), 500
-        
+
         if process.returncode != 0:
             logging.error(f"Script execution failed with return code {process.returncode}")
             logging.error(f"STDERR: {stderr}")
@@ -233,20 +233,20 @@ def generate_pdf():
                 except Exception:
                     db.session.rollback()
             return jsonify({'error': 'PDF generation failed', 'details': stderr.strip() if stderr else 'Unknown error occurred'}), 500
-        
+
         # Find generated PDF file
         pdf_filename = markdown_filename.rsplit('.', 1)[0] + '.pdf'
         pdf_path = os.path.join(temp_dir, pdf_filename)
-        
+
         if not os.path.exists(pdf_path):
             logging.error(f"Generated PDF not found at: {pdf_path}")
             return jsonify({
                 'error': 'PDF generation completed but output file not found',
                 'details': f'Expected file: {pdf_filename}'
             }), 500
-        
+
         logging.info(f"PDF generated successfully: {pdf_path}")
-        
+
         # Read PDF in memory to avoid race with cleanup
         with open(pdf_path, 'rb') as f:
             pdf_bytes = f.read()
@@ -261,14 +261,14 @@ def generate_pdf():
 
         # Send PDF file as attachment from memory
         return send_file(BytesIO(pdf_bytes), as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
-        
+
     except Exception as e:
         logging.error(f"Unexpected error during PDF generation: {e}")
         return jsonify({
             'error': 'Internal server error',
             'details': str(e)
         }), 500
-    
+
     finally:
         # Clean up temporary directory
         if temp_dir:

@@ -15,4 +15,3 @@
 
 - Validazione input (tipo/size file), nomi sicuri, esecuzione Pandoc con timeout, directory temporanee isolate e cleanup.
 - Invio PDF in memoria (evita TOCTOU su file temporanei) e logging strutturato.
-

@@ -13,4 +13,3 @@
   - Impostare `SESSION_SECRET` forte.
   - Eseguire dietro reverse proxy (Nginx) e HTTPS.
   - Valutare sandboxing Pandoc e quota temporanei.
-

@@ -26,4 +26,3 @@
 ## Risk & Rollout
 - Risk level: Low/Medium/High
 - Rollback plan: How to revert if needed
-

@@ -131,4 +131,3 @@ ai:
 
 - Raccordo con i documenti di analisi nella cartella Governance per posizionamento e priorità.
 - Inserire un executive summary delle evidenze di mercato nella prossima revisione del documento.
-

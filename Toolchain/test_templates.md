@@ -17,7 +17,7 @@ This section demonstrates how different templates handle text formatting and lay
 ## Key Features
 
 1. **Professional Layout**: Clean and organized structure
-2. **Table Styling**: Different approaches to table formatting  
+2. **Table Styling**: Different approaches to table formatting
 3. **Typography**: Optimized for readability
 4. **Headers/Footers**: Consistent page layout
 

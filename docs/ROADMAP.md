@@ -7,4 +7,3 @@
 5) Migrazione opzionale a Postgres, code execution queue (Celery/Redis) per carichi alti
 
 Vedi anche `Governance/strategic_roadmap.md` per la visione strategica.
-

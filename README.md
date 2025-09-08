@@ -46,4 +46,3 @@ Da definire (MIT/Apache-2.0 consigliate). Fammi sapere la preferenza e la aggiun
 
 - Segui la checklist PR in `CONTRIBUTING.md` per aprire richieste di merge coerenti e facili da revisionare.
 - Flusso consigliato con GitHub Desktop: crea un branch da `main`, committa con Conventional Commits, push e apri una PR (merge via squash).
-

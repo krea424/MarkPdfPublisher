@@ -3,6 +3,7 @@
 - Schema: SemVer (MAJOR.MINOR.PATCH)
 - Branching: `main` stabile; feature su `feat/*`; fix su `fix/*`.
 - Commit: Conventional Commits consigliati (es. `feat: aggiunge preview`).
+  (feat/fix/chore/docs/refactor/test; breaking con “!”)
 - Tag: `vX.Y.Z` su `main`.
 - Release: GitHub Release con note generate dai commit.
 
@@ -14,4 +15,3 @@
 4. PR verso `main`, squash & merge.
 5. Tagga una versione: `git tag v0.1.0 && git push --tags`.
 6. Pubblica Release in GitHub.
-

@@ -478,25 +478,25 @@ body {
         min-height: auto;
         position: relative;
     }
-    
+
     .sidebar-content {
         padding: 1.5rem 1rem;
         text-align: center;
     }
-    
+
     .features-list {
         display: none;
     }
-    
+
     .main-card .card-header,
     .main-card .card-body {
         padding: 1.5rem 1rem;
     }
-    
+
     .upload-area {
         padding: 1.5rem 1rem;
     }
-    
+
     .upload-icon {
         font-size: 2rem;
     }
@@ -692,7 +692,7 @@ body {
     gap: 8px;
     overflow-x: auto;
 }
-.thumbs-bar .thumb { 
+.thumbs-bar .thumb {
     flex: 0 0 auto;
     width: 66px;
     height: auto;

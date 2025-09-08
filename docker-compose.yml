@@ -10,4 +10,3 @@ services:
       - ./Toolchain/instance:/app/Toolchain/instance
     ports:
       - "8080:8080"
-

@@ -6,4 +6,3 @@ MarkLeaf abilita la produzione rapida di PDF professionali partendo da Markdown,
 - Costi: minimi (open‑source), hosting low‑cost; scalabile.
 - Rischi principali: dipendenze LaTeX/Font; mitigazione con container image.
 - Prossimi step: rafforzare backend (storage/logging), CI, container, rilascio 0.1.
-

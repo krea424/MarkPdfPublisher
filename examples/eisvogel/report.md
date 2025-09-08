@@ -43,4 +43,3 @@ print(kpi(0.18))  # -> 118.0
 This is a footnote reference.[^1]
 
 [^1]: Example footnote rendered with Eisvogel’s styling.
-
