@@ -8,7 +8,19 @@ SUM="$BASE/docs/CODEX_SESSION_LOG_${DAY}.md"
 
 echo "== Close Session =="
 echo "1) Assicurati di aver scritto 'STOPLOG' a Codex (IDE) prima di eseguire questo script."
-echo "2) Eseguo sanitizer del transcript più recente…"
+
+# 2) Backup del transcript più recente (se esiste)
+LATEST_TX_BEFORE_BACKUP="$(ls -t "$TX_DIR"/*.md 2>/dev/null | head -n 1 || true)"
+if [[ -n "${LATEST_TX_BEFORE_BACKUP:-}" && -f "$LATEST_TX_BEFORE_BACKUP" ]]; then
+  TS_BACKUP="$(TZ=Europe/Rome date +%Y%m%dT%H%M%S)"
+  BKP_PATH="${LATEST_TX_BEFORE_BACKUP%.md}.backup.${TS_BACKUP}.md"
+  cp "$LATEST_TX_BEFORE_BACKUP" "$BKP_PATH"
+  echo "2) Backup creato: $BKP_PATH"
+else
+  echo "2) Nessun transcript da salvare in backup."
+fi
+
+echo "3) Eseguo sanitizer del transcript più recente…"
 python3 "$BASE/scripts/sanitize_transcript.py" || { echo "Sanitizer fallito."; exit 1; }
 
 echo
