@@ -498,12 +498,18 @@ class PDFGenerator {
                 a.href = url;
 
                 // Get filename from response headers or use default
-                const contentDisposition = response.headers.get('Content-Disposition');
                 let filename = 'document.pdf';
+                const contentDisposition = response.headers.get('Content-Disposition');
                 if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-                    if (filenameMatch) {
-                        filename = filenameMatch[1];
+                    // Prefer RFC 5987 filename*
+                    let m = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+                    if (m && m[1]) {
+                        try { filename = decodeURIComponent(m[1].trim().replace(/"/g, '')); }
+                        catch (_) { filename = m[1].trim().replace(/"/g, ''); }
+                    } else {
+                        // Fallback to filename= (quoted or unquoted)
+                        m = contentDisposition.match(/filename="?([^";]+)"?/i);
+                        if (m && m[1]) filename = m[1];
                     }
                 }
 

@@ -5,6 +5,7 @@ import subprocess
 import shutil
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote as urlquote
 from io import BytesIO
 
 from flask import Flask, render_template, request, send_file, jsonify
@@ -260,8 +261,10 @@ def generate_pdf():
                 db.session.rollback()
 
         # Send PDF file as attachment from memory
-        return send_file(BytesIO(pdf_bytes), as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
-
+        resp = send_file(BytesIO(pdf_bytes), as_attachment=True, download_name=pdf_filename, mimetype='application/pdf')
+        # RFC 5987 compliant headers for UTF-8 and special characters
+        resp.headers['Content-Disposition'] = f'attachment; filename="{pdf_filename}"; filename*=UTF-8\'\'{urlquote(pdf_filename)}'
+        return resp
     except Exception as e:
         logging.error(f"Unexpected error during PDF generation: {e}")
         return jsonify({
@@ -284,81 +287,6 @@ def internal_error(e):
     """Handle internal server errors"""
     return jsonify({'error': 'Internal server error occurred'}), 500
 
-
-@app.route('/preview-pdf', methods=['POST'])
-def preview_pdf():
-    """Render PDF preview and return inline PDF without attachment."""
-    temp_dir = None
-    try:
-        if 'markdownFile' not in request.files:
-            return jsonify({'error': 'No markdown file provided'}), 400
-
-        markdown_file = request.files['markdownFile']
-        logo_file = request.files.get('logoFile')
-        template_type = request.form.get('templateType', 'classic')
-        toc_enabled_raw = request.form.get('tocEnabled', 'true')
-        toc_depth_raw = request.form.get('tocDepth', '3')
-
-        if template_type not in ['classic', 'consulting', 'eisvogel']:
-            template_type = 'classic'
-
-        toc_enabled = str(toc_enabled_raw).lower() in {'1', 'true', 'on', 'yes'}
-        try:
-            toc_depth = int(toc_depth_raw)
-        except (TypeError, ValueError):
-            toc_depth = 3
-        if toc_depth < 1 or toc_depth > 6:
-            toc_depth = 3
-
-        if markdown_file.filename == '':
-            return jsonify({'error': 'No markdown file selected'}), 400
-        if not allowed_file(markdown_file.filename, ALLOWED_MARKDOWN_EXTENSIONS):
-            return jsonify({'error': 'Invalid markdown file format. Only .md files are allowed.'}), 400
-        if logo_file and logo_file.filename != '' and not allowed_file(logo_file.filename, ALLOWED_LOGO_EXTENSIONS):
-            return jsonify({'error': 'Invalid logo file format. Allowed formats: PNG, SVG, PDF, JPG, JPEG'}), 400
-
-        temp_dir = create_temp_directory()
-        markdown_filename = secure_filename(markdown_file.filename)
-        markdown_path = os.path.join(temp_dir, markdown_filename)
-        markdown_file.save(markdown_path)
-
-        script_path = str(BASE_DIR / 'publish.sh')
-        cmd_args = ['/bin/bash', script_path, markdown_path]
-        if logo_file and logo_file.filename != '':
-            logo_filename = secure_filename(logo_file.filename)
-            logo_path = os.path.join(temp_dir, logo_filename)
-            logo_file.save(logo_path)
-            cmd_args.extend(['--logo', logo_path])
-        cmd_args.extend(['--template', template_type])
-        if toc_enabled:
-            cmd_args.append('--toc')
-            cmd_args.extend(['--toc-depth', str(toc_depth)])
-        else:
-            cmd_args.append('--no-toc')
-
-        process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=temp_dir, text=True)
-        stdout, stderr = process.communicate(timeout=300)
-        if process.returncode != 0:
-            logging.error(f"Preview script failed: {stderr}")
-            return jsonify({'error': 'Preview generation failed', 'details': stderr.strip() if stderr else 'Unknown error'}), 500
-
-        pdf_filename = markdown_filename.rsplit('.', 1)[0] + '.pdf'
-        pdf_path = os.path.join(temp_dir, pdf_filename)
-        if not os.path.exists(pdf_path):
-            return jsonify({'error': 'Preview PDF not found'}), 500
-        with open(pdf_path, 'rb') as f:
-            pdf_bytes = f.read()
-        # Inline response (no attachment)
-        return send_file(BytesIO(pdf_bytes), mimetype='application/pdf', download_name=pdf_filename, as_attachment=False)
-
-    except subprocess.TimeoutExpired:
-        return jsonify({'error': 'Preview generation timed out'}), 500
-    except Exception as e:
-        logging.exception("Unexpected error in preview")
-        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
-    finally:
-        if temp_dir:
-            cleanup_temp_directory(temp_dir)
 
 @app.route('/preview', methods=['POST'])
 def preview_html():
@@ -420,5 +348,78 @@ def preview_html():
     finally:
         if temp_dir:
             cleanup_temp_directory(temp_dir)
+@app.route('/preview-pdf', methods=['POST'])
+def preview_pdf():
+    """Render PDF preview and return inline PDF without attachment."""
+    temp_dir = None
+    try:
+        if 'markdownFile' not in request.files:
+            return jsonify({'error': 'No markdown file provided'}), 400
 
-# (Duplicate preview_pdf removed)
+        markdown_file = request.files['markdownFile']
+        logo_file = request.files.get('logoFile')
+        template_type = request.form.get('templateType', 'classic')
+        toc_enabled_raw = request.form.get('tocEnabled', 'true')
+        toc_depth_raw = request.form.get('tocDepth', '3')
+
+        if template_type not in ['classic', 'consulting', 'eisvogel']:
+            template_type = 'classic'
+
+        toc_enabled = str(toc_enabled_raw).lower() in {'1', 'true', 'on', 'yes'}
+        try:
+            toc_depth = int(toc_depth_raw)
+        except (TypeError, ValueError):
+            toc_depth = 3
+        if toc_depth < 1 or toc_depth > 6:
+            toc_depth = 3
+
+        if markdown_file.filename == '':
+            return jsonify({'error': 'No markdown file selected'}), 400
+        if not allowed_file(markdown_file.filename, ALLOWED_MARKDOWN_EXTENSIONS):
+            return jsonify({'error': 'Invalid markdown file format. Only .md files are allowed.'}), 400
+        if logo_file and logo_file.filename != '' and not allowed_file(logo_file.filename, ALLOWED_LOGO_EXTENSIONS):
+            return jsonify({'error': 'Invalid logo file format. Allowed formats: PNG, SVG, PDF, JPG, JPEG'}), 400
+
+        temp_dir = create_temp_directory()
+        markdown_filename = secure_filename(markdown_file.filename)
+        markdown_path = os.path.join(temp_dir, markdown_filename)
+        markdown_file.save(markdown_path)
+
+        script_path = str(BASE_DIR / 'publish.sh')
+        cmd_args = ['/bin/bash', script_path, markdown_path, '--template', template_type]
+        if logo_file and logo_file.filename != '':
+            logo_filename = secure_filename(logo_file.filename)
+            logo_path = os.path.join(temp_dir, logo_filename)
+            logo_file.save(logo_path)
+            cmd_args.extend(['--logo', logo_path])
+
+        if toc_enabled:
+            cmd_args.extend(['--toc', '--toc-depth', str(toc_depth)])
+        else:
+            cmd_args.append('--no-toc')
+
+        process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=temp_dir, text=True)
+        stdout, stderr = process.communicate(timeout=300)
+        if process.returncode != 0:
+            logging.error(f"Preview script failed: {stderr}")
+            return jsonify({'error': 'Preview generation failed', 'details': stderr.strip() if stderr else 'Unknown error'}), 500
+
+        pdf_filename = markdown_filename.rsplit('.', 1)[0] + '.pdf'
+        pdf_path = os.path.join(temp_dir, pdf_filename)
+        if not os.path.exists(pdf_path):
+            return jsonify({'error': 'Preview PDF not found'}), 500
+        with open(pdf_path, 'rb') as f:
+            pdf_bytes = f.read()
+        # Inline response (no attachment)
+        resp = send_file(BytesIO(pdf_bytes), mimetype='application/pdf', download_name=pdf_filename, as_attachment=False)
+        # RFC 5987 compliant headers for UTF-8 and special characters
+        resp.headers['Content-Disposition'] = f'inline; filename="{pdf_filename}"; filename*=UTF-8\'\'{urlquote(pdf_filename)}'
+        return resp
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Preview generation timed out'}), 500
+    except Exception as e:
+        logging.exception("Unexpected error in preview")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
+    finally:
+        if temp_dir:
+            cleanup_temp_directory(temp_dir)
