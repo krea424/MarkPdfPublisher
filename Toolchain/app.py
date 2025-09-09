@@ -423,3 +423,77 @@ def preview_pdf():
     finally:
         if temp_dir:
             cleanup_temp_directory(temp_dir)
+
+@app.route('/generate-by-path', methods=['POST'])
+def generate_by_path():
+    """
+    Generate PDF from an absolute path on the server.
+    This is intended for local/controlled environments.
+    Accepts JSON: {source_path, templateType?, tocEnabled?, tocDepth?, logoPath?}
+    """
+    if not request.is_json:
+        return jsonify({'error': 'Invalid request: Content-Type must be application/json'}), 415
+
+    data = request.get_json()
+    source_path_str = data.get('source_path')
+
+    if not source_path_str:
+        return jsonify({'error': '`source_path` is required'}), 400
+
+    # --- Security and Path Validation ---
+    if not os.path.isabs(source_path_str):
+        return jsonify({'error': '`source_path` must be an absolute path'}), 400
+
+    source_path = Path(source_path_str).resolve()
+    if not source_path.is_file():
+        return jsonify({'error': f'Source file not found: {source_path}'}), 404
+
+    if source_path.suffix.lower() != '.md':
+        return jsonify({'error': 'Source file must be a .md file'}), 400
+
+    source_dir = source_path.parent
+    if not os.access(source_dir, os.R_OK) or not os.access(source_dir, os.W_OK):
+        return jsonify({'error': f'Permission denied: cannot read/write to {source_dir}'}), 403
+
+    # --- Get Parameters ---
+    template_type = data.get('templateType', 'classic')
+    toc_enabled = data.get('tocEnabled', True)
+    toc_depth = data.get('tocDepth', 3)
+    logo_path_str = data.get('logoPath')
+
+    # --- Prepare publish.sh arguments ---
+    script_path = str(BASE_DIR / 'publish.sh')
+    cmd_args = ['/bin/bash', script_path, str(source_path)]
+    cmd_args.extend(['--template', template_type])
+
+    if toc_enabled:
+        cmd_args.extend(['--toc', '--toc-depth', str(toc_depth)])
+    else:
+        cmd_args.append('--no-toc')
+
+    if logo_path_str:
+        if not os.path.isabs(logo_path_str):
+            return jsonify({'error': '`logoPath` must be an absolute path'}), 400
+        logo_path = Path(logo_path_str).resolve()
+        if not logo_path.is_file():
+            return jsonify({'error': f'Logo file not found: {logo_path}'}), 404
+        cmd_args.extend(['--logo', str(logo_path)])
+
+    # --- Execute ---
+    try:
+        # The script writes the PDF next to the source, so we run it from a temp dir
+        # to avoid polluting the source directory with intermediate files.
+        with subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as process:
+            stdout, stderr = process.communicate(timeout=300)
+            if process.returncode != 0:
+                logging.error(f"Path-based generation failed: {stderr}")
+                return jsonify({'error': 'PDF generation failed', 'details': stderr.strip()}), 500
+
+        pdf_path = source_path.with_suffix('.pdf')
+        return jsonify({'message': 'PDF generated successfully', 'pdf_path': str(pdf_path)})
+
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'PDF generation timed out'}), 500
+    except Exception as e:
+        logging.exception("Unexpected error in generate_by_path")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
