@@ -593,13 +593,37 @@ class PDFGenerator {
             }
             if (this.logoInput.files[0]) formData.append('logoFile', this.logoInput.files[0]);
 
+            // Try full PDF preview first (requires Pandoc + XeLaTeX)
             const response = await fetch('/preview-pdf', { method: 'POST', body: formData });
             if (!response.ok) {
+                // Capture backend error (if any)
                 let msg = 'Failed to render preview.';
-                try { const data = await response.json(); if (data && data.error) msg = data.error; } catch {}
-                this.showToast('error', msg);
-                this.showError(msg);
-                return;
+                let details = '';
+                try {
+                    const data = await response.json();
+                    if (data?.error) msg = data.error;
+                    if (data?.details) details = data.details;
+                } catch {}
+
+                // Heuristics: if LaTeX not installed or pandoc missing, fallback to HTML preview
+                const missingLatex = /xelatex/i.test(details) || /TeXLive|MacTeX/i.test(details);
+                const missingPandoc = /pandoc/i.test(details) && /non trovato|not found|command not found/i.test(details);
+
+                try {
+                    await this.renderHtmlPreviewFallback(formData, missingLatex || missingPandoc ? msg : undefined);
+                    // Show modal after successful fallback
+                    const modalEl = document.getElementById('previewModal');
+                    if (modalEl && window.bootstrap) {
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.show();
+                    }
+                    return;
+                } catch (fallbackErr) {
+                    // Fallback also failed; surface original error
+                    this.showToast('error', msg);
+                    this.showError(msg);
+                    return;
+                }
             }
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -669,6 +693,68 @@ class PDFGenerator {
             btnText.classList.remove('d-none');
             btnLoading.classList.add('d-none');
         }
+    }
+
+    async renderHtmlPreviewFallback(formData, reason) {
+        // Attempt server-side HTML preview (Pandoc only). If that fails, show raw markdown.
+        try {
+            const resp = await fetch('/preview', { method: 'POST', body: formData });
+            if (!resp.ok) throw new Error('Preview service unavailable');
+            const data = await resp.json();
+            if (!data?.html) throw new Error('No HTML returned');
+
+            // Render HTML into preview page container
+            if (this.previewFrame) this.previewFrame.classList.add('d-none');
+            if (this.previewPage) {
+                this.previewPage.classList.remove('d-none');
+                this.previewPage.classList.remove('flip-mode');
+                this.previewPage.innerHTML = `
+                    <div class="alert alert-warning mb-2" role="alert">
+                        ${reason ? `${reason}. ` : ''}Showing fast HTML preview. Final PDF may differ.
+                    </div>
+                    <div class="md-preview">${data.html}</div>
+                `;
+            }
+            this.toggleHotspots(false);
+            if (this.flipPageIndicator) this.flipPageIndicator.textContent = '–';
+            if (this.prevPageBtn) this.prevPageBtn.disabled = true;
+            if (this.nextPageBtn) this.nextPageBtn.disabled = true;
+            return;
+        } catch (e) {
+            // Client-only raw markdown fallback
+            try {
+                const file = this.markdownInput?.files?.[0];
+                if (!file) throw e;
+                const text = await file.text();
+                if (this.previewFrame) this.previewFrame.classList.add('d-none');
+                if (this.previewPage) {
+                    this.previewPage.classList.remove('d-none');
+                    this.previewPage.classList.remove('flip-mode');
+                    this.previewPage.innerHTML = `
+                        <div class="alert alert-danger mb-2" role="alert">
+                            Cannot render preview server-side. Displaying raw Markdown.
+                        </div>
+                        <pre style="white-space: pre-wrap;">${this.escapeHtml(text)}</pre>
+                    `;
+                }
+                this.toggleHotspots(false);
+                if (this.flipPageIndicator) this.flipPageIndicator.textContent = '–';
+                if (this.prevPageBtn) this.prevPageBtn.disabled = true;
+                if (this.nextPageBtn) this.nextPageBtn.disabled = true;
+                return;
+            } catch {
+                throw e;
+            }
+        }
+    }
+
+    escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     async updatePageCountFromBlob(blob) {
