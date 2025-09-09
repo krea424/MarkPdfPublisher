@@ -5,10 +5,20 @@
 
 class PDFGenerator {
     constructor() {
-        this.form = document.getElementById('uploadForm');
+        // Mode containers
+        this.uploadModeContainer = document.getElementById('uploadFormContainer');
+        this.localPathModeContainer = document.getElementById('localPathFormContainer');
+
+        // Upload mode elements
         this.markdownInput = document.getElementById('markdownFile');
         this.logoInput = document.getElementById('logoFile');
         this.generateBtn = document.getElementById('generateBtn');
+
+        // Local path mode elements
+        this.generateBtnLocal = document.getElementById('generateBtnLocal');
+        this.localMarkdownPathInput = document.getElementById('localMarkdownPath');
+        this.localLogoPathInput = document.getElementById('localLogoPath');
+
         this.errorAlert = document.getElementById('errorAlert');
         this.successAlert = document.getElementById('successAlert');
         this.tocEnabledEl = document.getElementById('tocEnabled');
@@ -188,10 +198,23 @@ class PDFGenerator {
     }
 
     setupFormSubmission() {
-        this.form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.generatePDF();
-        });
+        // Mode toggles
+        document.getElementById('uploadMode').addEventListener('change', () => this.setMode('upload'));
+        document.getElementById('localPathMode').addEventListener('change', () => this.setMode('local'));
+
+        // Upload mode button
+        if (this.generateBtn) {
+            this.generateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.generatePDF();
+            });
+        }
+
+        // Local path mode button
+        if (this.generateBtnLocal) {
+            this.generateBtnLocal.addEventListener('click', () => this.generatePDFLocal());
+            this.localMarkdownPathInput.addEventListener('input', () => this.updateGenerateButton());
+        }
 
         // Keep depth disabled when TOC is off (cosmetic)
         if (this.tocEnabledEl && this.tocDepthEl) {
@@ -419,8 +442,17 @@ class PDFGenerator {
 
     updateGenerateButton() {
         const hasMarkdown = this.markdownInput.files.length > 0;
-        this.generateBtn.disabled = !hasMarkdown;
-        if (this.previewBtn) this.previewBtn.disabled = !hasMarkdown;
+        const hasLocalPath = this.localMarkdownPathInput && this.localMarkdownPathInput.value.trim() !== '';
+
+        if (this.generateBtn) {
+            this.generateBtn.disabled = !hasMarkdown;
+        }
+        if (this.previewBtn) {
+            this.previewBtn.disabled = !hasMarkdown;
+        }
+        if (this.generateBtnLocal) {
+            this.generateBtnLocal.disabled = !hasLocalPath;
+        }
     }
 
     async generatePDF() {
@@ -543,6 +575,70 @@ class PDFGenerator {
             this.setLoading(false);
             this.setProgress(false);
         }
+    }
+
+    async generatePDFLocal() {
+        const sourcePath = this.localMarkdownPathInput.value.trim();
+        if (!sourcePath) {
+            this.showError('Please provide an absolute path to the Markdown file.');
+            return;
+        }
+
+        try {
+            this.setLoading(true, 'local');
+            this.setProgress(true);
+            this.hideError();
+            this.hideSuccess();
+
+            const payload = {
+                source_path: sourcePath,
+                logoPath: this.localLogoPathInput.value.trim() || null,
+                templateType: document.getElementById('templateType')?.value || 'classic',
+                tocEnabled: this.tocEnabledEl ? this.tocEnabledEl.checked : true,
+                tocDepth: this.tocDepthEl ? parseInt(this.tocDepthEl.value, 10) : 3,
+            };
+
+            const response = await fetch('/generate-by-path', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const responseData = await response.json();
+
+            if (response.ok) {
+                this.showSuccess(`PDF generated successfully at: ${responseData.pdf_path}`);
+                this.showToast('success', 'Local PDF generated successfully.');
+            } else {
+                this.showError(responseData.error || 'An error occurred during local PDF generation.');
+                if (responseData.details) {
+                    console.error('Local PDF Generation Error Details:', responseData.details);
+                }
+                this.showToast('error', responseData.error || 'Failed to generate local PDF.');
+            }
+        } catch (error) {
+            console.error('Network or parsing error:', error);
+            this.showError('A network error occurred. Please check your connection and try again.');
+            this.showToast('error', 'Network error during local generation.');
+        } finally {
+            this.setLoading(false, 'local');
+            this.setProgress(false);
+        }
+    }
+
+    setMode(mode) {
+        if (mode === 'upload') {
+            this.uploadModeContainer.classList.remove('d-none');
+            this.localPathModeContainer.classList.add('d-none');
+        } else if (mode === 'local') {
+            this.uploadModeContainer.classList.add('d-none');
+            this.localPathModeContainer.classList.remove('d-none');
+        }
+        this.hideError();
+        this.hideSuccess();
+        this.updateGenerateButton();
     }
 
     async generatePreview() {
@@ -1248,18 +1344,23 @@ class PDFGenerator {
         this.preRenderToCache(neighbor).catch(() => {});
     }
 
-    setLoading(isLoading) {
-        const btnText = this.generateBtn.querySelector('.btn-text');
-        const btnLoading = this.generateBtn.querySelector('.btn-loading');
+    setLoading(isLoading, mode = 'upload') {
+        const btn = mode === 'local' ? this.generateBtnLocal : this.generateBtn;
+        if (!btn) return;
+
+        const btnText = btn.querySelector('.btn-text');
+        const btnLoading = btn.querySelector('.btn-loading');
 
         if (isLoading) {
             btnText.classList.add('d-none');
             btnLoading.classList.remove('d-none');
-            this.generateBtn.disabled = true;
+            btn.disabled = true;
         } else {
             btnText.classList.remove('d-none');
             btnLoading.classList.add('d-none');
-            this.updateGenerateButton();
+            // Re-enable based on current state
+            if (mode === 'upload') this.updateGenerateButton();
+            else if (mode === 'local') this.updateGenerateButton();
         }
     }
 

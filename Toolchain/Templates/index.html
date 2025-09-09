@@ -158,6 +158,17 @@
                                 </div>
 
                                 <div class="card-body">
+                                    <!-- Mode Toggle -->
+                                    <div class="d-flex justify-content-center mb-4">
+                                        <div class="btn-group" role="group" aria-label="Generation Mode">
+                                            <input type="radio" class="btn-check" name="generationMode" id="uploadMode" autocomplete="off" checked>
+                                            <label class="btn btn-outline-primary" for="uploadMode"><i class="fas fa-upload me-2"></i>Upload Mode</label>
+
+                                            <input type="radio" class="btn-check" name="generationMode" id="localPathMode" autocomplete="off">
+                                            <label class="btn btn-outline-primary" for="localPathMode"><i class="fas fa-folder-open me-2"></i>Local Path Mode</label>
+                                        </div>
+                                    </div>
+
                                     <!-- Error Alert -->
                                     <div id="errorAlert" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -172,8 +183,8 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                     </div>
 
-                                    <!-- Upload Form -->
-                                    <form id="uploadForm" enctype="multipart/form-data">
+                                    <!-- Upload Mode Form -->
+                                    <div id="uploadFormContainer">
                                         <!-- Markdown File Upload -->
                                         <div class="mb-4">
                                             <label for="markdownFile" class="form-label fw-bold">
@@ -227,23 +238,24 @@
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <!-- Actions -->
+                                    <!-- Local Path Mode Form -->
+                                    <div id="localPathFormContainer" class="d-none">
+                                        <div class="mb-3">
+                                            <label for="localMarkdownPath" class="form-label fw-bold">Absolute Path to Markdown File <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="localMarkdownPath" placeholder="/path/to/your/document.md" required>
+                                            <div class="form-text">The server must have read/write access to this path.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="localLogoPath" class="form-label fw-bold">Absolute Path to Logo File <span class="text-muted">(Optional)</span></label>
+                                            <input type="text" class="form-control" id="localLogoPath" placeholder="/path/to/your/logo.png">
+                                        </div>
                                         <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-outline-secondary btn-lg" id="previewBtn" disabled>
-                                                <span class="btn-text">
-                                                    <i class="fas fa-eye me-2"></i>
-                                                    Preview
-                                                </span>
-                                                <span class="btn-loading d-none">
-                                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Rendering...
-                                                </span>
-                                            </button>
-                                            <button type="submit" class="btn btn-primary btn-lg" id="generateBtn" disabled>
+                                             <button type="button" class="btn btn-primary btn-lg" id="generateBtnLocal">
                                                 <span class="btn-text">
                                                     <i class="fas fa-file-pdf me-2"></i>
-                                                    Generate PDF
+                                                    Generate PDF Locally
                                                 </span>
                                                 <span class="btn-loading d-none">
                                                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -251,7 +263,7 @@
                                                 </span>
                                             </button>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
 
