@@ -162,11 +162,20 @@ def generate_pdf():
         cmd_args = ['/bin/bash', script_path, markdown_path]
 
         # Save logo file if provided and add to command
+        logo_path = None
         if logo_file and logo_file.filename != '':
             logo_filename = secure_filename(logo_file.filename)
             logo_path = os.path.join(temp_dir, logo_filename)
             logo_file.save(logo_path)
             logging.info(f"Saved logo file: {logo_path}")
+        else:
+            # Use default logo if none is provided
+            default_logo_path = BASE_DIR / "static" / "assets" / "logo_default.pdf"
+            if default_logo_path.exists():
+                logo_path = str(default_logo_path)
+                logging.info(f"Using default logo: {logo_path}")
+
+        if logo_path:
             cmd_args.extend(['--logo', logo_path])
 
         # Add template type to command
@@ -387,10 +396,21 @@ def preview_pdf():
 
         script_path = str(BASE_DIR / 'publish.sh')
         cmd_args = ['/bin/bash', script_path, markdown_path, '--template', template_type]
+
+        logo_path = None
         if logo_file and logo_file.filename != '':
             logo_filename = secure_filename(logo_file.filename)
             logo_path = os.path.join(temp_dir, logo_filename)
             logo_file.save(logo_path)
+            logging.info(f"Saved logo file for preview: {logo_path}")
+        else:
+            # Use default logo if none is provided
+            default_logo_path = BASE_DIR / "static" / "assets" / "logo_default.pdf"
+            if default_logo_path.exists():
+                logo_path = str(default_logo_path)
+                logging.info(f"Using default logo for preview: {logo_path}")
+
+        if logo_path:
             cmd_args.extend(['--logo', logo_path])
 
         if toc_enabled:
