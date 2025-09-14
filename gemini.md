@@ -6,7 +6,7 @@ MarkPdfPublisher (internally known as MarkLeaf) is a web-based tool that convert
 
 ## Key Features
 
-- **Dual Generation Modes**: 
+- **Dual Generation Modes**:
     - **Upload Mode**: A user-friendly web interface for uploading Markdown files and receiving a generated PDF.
     - **Local Path Mode**: An API-driven mode for trusted environments to generate PDFs directly from a file path on the server.
 - **Premium Templates**: Comes with multiple templates, including `classic`, `consulting`, and the typographically-focused `Eisvogel`.
